@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs/promises');
+const os = require('os');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
@@ -8,11 +9,20 @@ const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = path.join(__dirname, 'data');
+const DEFAULT_DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.DATABASE_URL
+  ? DEFAULT_DATA_DIR
+  : process.env.VERCEL
+    ? path.join(process.env.TMPDIR || os.tmpdir(), 'dsa-tracker-data')
+    : DEFAULT_DATA_DIR;
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const SESSION_COOKIE = 'dsa_session';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-only-change-this-secret';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+
+if (!process.env.DATABASE_URL && process.env.VERCEL) {
+  console.warn('No DATABASE_URL configured on Vercel; using temporary in-memory storage at', DATA_DIR);
+}
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID || undefined);
 let pool = null;
 let storePromise = null;

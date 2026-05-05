@@ -32,6 +32,8 @@ This app uses Google Identity Services. The frontend receives the Google ID toke
 
 For a free persistent database, create a free Neon Postgres project and copy its connection string into `DATABASE_URL`.
 
+> On Vercel, file-based storage is not persistent across serverless invocations. You must set `DATABASE_URL` in the Vercel environment variables for production storage.
+
 ## Render
 
 1. Push this project to GitHub.
