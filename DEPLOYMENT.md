@@ -48,9 +48,11 @@ Render can also read `render.yaml`, but you still need to add private values for
 
 ## Vercel
 
+Vercel serves as the frontend, with the Render backend providing the API.
+
 1. Push this project to GitHub.
 2. Import the repo in Vercel.
 3. Keep the default install/build settings.
-4. Add the required environment variables.
+4. Add the required environment variables (only `GOOGLE_CLIENT_ID` is needed for the frontend).
 
-`public/index.html` is served as the frontend. `api/index.js` exposes the Express backend as a Vercel function.
+The frontend (`public/index.html` and `public/login.html`) makes API calls to `https://tubetutor-nic4.onrender.com` for all backend functionality.

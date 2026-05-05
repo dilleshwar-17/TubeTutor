@@ -66,9 +66,10 @@ let currentUser = null;
 let googleClientId = '';
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {
+  const baseUrl = 'https://tubetutor-nic4.onrender.com';
+  const response = await fetch(`${baseUrl}${path}`, {
     ...options,
-    credentials: 'same-origin',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       'x-client-id': localStorage.getItem(CLIENT_KEY) || '',
