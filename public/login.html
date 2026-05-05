@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TubeTutor — Login / Register</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --bg: #060614;
+    --panel: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.14);
+    --text: #f8fafc;
+    --muted: rgba(248,250,252,0.65);
+    --accent: #a78bfa;
+    --accent2: #38bdf8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; font-family: 'DM Mono', monospace; color: var(--text); background: radial-gradient(circle at top, rgba(167,139,250,0.18), transparent 28%), radial-gradient(circle at 80% 20%, rgba(56,221,248,0.12), transparent 25%), #060614; }
+  .page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+  .card { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 28px; backdrop-filter: blur(18px); padding: 34px 32px; box-shadow: 0 40px 80px rgba(0,0,0,0.25); }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.2rem, 4vw, 3.4rem); margin-bottom: 8px; }
+  p { margin: 0 0 22px; line-height: 1.7; color: var(--muted); }
+  .notice { color: var(--text); font-size: 0.94rem; margin-bottom: 22px; }
+  .button-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .button, .link-button { display: inline-flex; align-items: center; justify-content: center; padding: 12px 18px; border-radius: 100px; border: 1px solid var(--border); font-family: 'DM Mono', monospace; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 1px; cursor: pointer; color: var(--text); text-decoration: none; }
+  .button { background: rgba(255,255,255,0.08); }
+  .button:hover, .link-button:hover { background: rgba(255,255,255,0.12); }
+  .user-card { display: none; gap: 16px; align-items: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 18px; margin-top: 18px; }
+  .user-card.visible { display: flex; }
+  .user-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.18); }
+  .user-info { min-width: 0; }
+  .user-name { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+  .user-email { font-size: 0.85rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status { margin-top: 18px; font-size: 0.88rem; color: var(--muted); }
+  .auth-note { font-size: 0.88rem; color: #f87171; margin-top: 14px; }
+  .footer { margin-top: 28px; color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+    <h1>Login / Register</h1>
+    <p>Sign in with Google to save your TubeTutor progress and access the tracker from any device.</p>
+    <div id="google-signin"></div>
+    <div class="auth-note" id="auth-note"></div>
+    <div class="user-card" id="user-card">
+      <img class="user-avatar" id="user-avatar" alt="User avatar">
+      <div class="user-info">
+        <div class="user-name" id="user-name"></div>
+        <div class="user-email" id="user-email"></div>
+      </div>
+    </div>
+    <div class="button-row">
+      <button class="button" id="logout-btn" type="button" onclick="logout()" style="display:none">Sign out</button>
+      <a class="link-button" id="continue-btn" href="/" style="display:none">Continue to tracker</a>
+      <a class="link-button" href="/" style="opacity:0.8">Back to tracker</a>
+    </div>
+    <p class="footer">Use the same Google account for login and registration. Authorized origins for Google OAuth: <strong>https://tubetutor-nic4.onrender.com</strong> and <strong>https://dilleshwar-dsa.vercel.app</strong>.</p>
+  </div>
+</div>
+<script>
+const CLIENT_KEY = 'dsa-tracker-client-id';
+let currentUser = null;
+let googleClientId = '';
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-client-id': localStorage.getItem(CLIENT_KEY) || '',
+      ...(options.headers || {})
+    }
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || `API request failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+function ensureClientId() {
+  let id = localStorage.getItem(CLIENT_KEY);
+  if (!id) {
+    id = window.crypto?.randomUUID?.() || `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    localStorage.setItem(CLIENT_KEY, id);
+  }
+  return id;
+}
+
+async function loadConfig() {
+  const result = await api('/api/config');
+  googleClientId = result.googleClientId || '';
+}
+
+async function loadAuth() {
+  const result = await api('/api/auth/me');
+  currentUser = result.user;
+  renderAuth();
+}
+
+function renderAuth() {
+  const signIn = document.getElementById('google-signin');
+  const userCard = document.getElementById('user-card');
+  const authNote = document.getElementById('auth-note');
+  const avatar = document.getElementById('user-avatar');
+  const name = document.getElementById('user-name');
+  const email = document.getElementById('user-email');
+  const logoutBtn = document.getElementById('logout-btn');
+  const continueBtn = document.getElementById('continue-btn');
+
+  if (currentUser) {
+    signIn.style.display = 'none';
+    userCard.classList.add('visible');
+    avatar.src = currentUser.picture || '';
+    name.textContent = currentUser.name || currentUser.email;
+    email.textContent = currentUser.email || '';
+    authNote.textContent = 'Logged in successfully. Click continue to open your tracker.';
+    logoutBtn.style.display = 'inline-flex';
+    continueBtn.style.display = 'inline-flex';
+    authNote.style.color = '#a3e635';
+    return;
+  }
+
+  userCard.classList.remove('visible');
+  signIn.style.display = '';
+  logoutBtn.style.display = 'none';
+  continueBtn.style.display = 'none';
+  authNote.style.color = '#f87171';
+  authNote.textContent = googleClientId ? 'Sign in with Google to register or login.' : 'Google sign-in is not configured yet.';
+}
+
+function initGoogleSignIn() {
+  renderAuth();
+  if (!googleClientId) return;
+  if (!window.google || !window.google.accounts) {
+    setTimeout(initGoogleSignIn, 250);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: googleClientId,
+    callback: handleGoogleCredential
+  });
+  google.accounts.id.renderButton(document.getElementById('google-signin'), {
+    theme: 'filled_blue',
+    size: 'large',
+    shape: 'pill',
+    text: 'continue_with'
+  });
+}
+
+async function handleGoogleCredential(response) {
+  try {
+    await api('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential: response.credential })
+    });
+    await loadAuth();
+  } catch (error) {
+    console.error('Google sign-in failed', error);
+    document.getElementById('auth-note').textContent = error.message;
+  }
+}
+
+async function logout() {
+  try {
+    await api('/api/auth/logout', { method: 'POST' });
+  } catch (error) {
+    console.error('Logout failed', error);
+  }
+  if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
+  currentUser = null;
+  renderAuth();
+}
+
+(async () => {
+  ensureClientId();
+  await loadConfig();
+  await loadAuth();
+  initGoogleSignIn();
+})();
+</script>
+</body>
+</html>

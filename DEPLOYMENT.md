@@ -22,8 +22,8 @@ NODE_ENV=production
 2. Create an OAuth Client ID with application type `Web application`.
 3. Add authorized JavaScript origins:
    - `http://localhost:3000`
-   - your Render URL
-   - your Vercel URL
+   - `https://tubetutor-nic4.onrender.com`
+   - `https://dilleshwar-dsa.vercel.app`
 4. Copy the client ID into `GOOGLE_CLIENT_ID`.
 
 This app uses Google Identity Services. The frontend receives the Google ID token, sends it to `/api/auth/google`, and the backend verifies it before creating the login session.

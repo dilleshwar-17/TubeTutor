@@ -188,7 +188,10 @@ async function initStore() {
 
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false }
+    ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false },
+    max: 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
   });
 
   await pool.query(`
@@ -287,7 +290,10 @@ async function resetProgress(ownerKey) {
   return [];
 }
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(async (req, res, next) => {
@@ -389,6 +395,11 @@ app.delete('/api/progress', async (req, res, next) => {
 app.use((error, req, res, next) => {
   console.error(error);
   res.status(500).json({ error: 'Server error.' });
+});
+
+// Catch-all handler: serve index.html for any non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 if (require.main === module) {

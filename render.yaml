@@ -2,6 +2,7 @@ services:
   - type: web
     name: dsa-tracker
     env: node
+    root: .
     plan: free
     buildCommand: npm install
     startCommand: npm start
