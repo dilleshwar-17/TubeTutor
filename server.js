@@ -168,7 +168,7 @@ function setSessionCookie(res, user) {
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000
   });
 }
@@ -177,7 +177,7 @@ function clearSessionCookie(res) {
   res.clearCookie(SESSION_COOKIE, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   });
 }
 
@@ -301,7 +301,11 @@ async function resetProgress(ownerKey) {
 }
 
 app.use(cors({
-  origin: true,
+  origin: [
+    'https://dilleshwar-dsa.vercel.app',
+    'https://tubetutor-nic4.onrender.com',
+    'http://localhost:3000'
+  ],
   credentials: true
 }));
 app.use(express.json());
