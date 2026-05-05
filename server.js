@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs/promises');
@@ -207,9 +208,10 @@ async function initStore() {
   await pool.query(`
     create table if not exists users (
       google_sub text primary key,
-      email text,
+      email text unique,
       name text,
       picture text,
+      password_hash text,
       created_at timestamptz not null default now(),
       updated_at timestamptz not null default now()
     );
@@ -234,11 +236,11 @@ function ensureStore() {
 async function saveUser(user) {
   if (pool) {
     await pool.query(
-      `insert into users (google_sub, email, name, picture, updated_at)
-       values ($1, $2, $3, $4, now())
+      `insert into users (google_sub, email, name, picture, password_hash, updated_at)
+       values ($1, $2, $3, $4, $5, now())
        on conflict (google_sub)
-       do update set email = excluded.email, name = excluded.name, picture = excluded.picture, updated_at = now()`,
-      [user.sub, user.email, user.name, user.picture]
+       do update set email = excluded.email, name = excluded.name, picture = excluded.picture, password_hash = excluded.password_hash, updated_at = now()`,
+      [user.sub, user.email, user.name, user.picture, user.passwordHash || null]
     );
     return;
   }
@@ -301,15 +303,11 @@ async function resetProgress(ownerKey) {
 }
 
 app.use(cors({
-  origin: [
-    'https://dilleshwar-dsa.vercel.app',
-    'https://tubetutor-nic4.onrender.com',
-    'http://localhost:3000'
-  ],
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(async (req, res, next) => {
   try {
     await ensureStore();
@@ -318,6 +316,13 @@ app.use(async (req, res, next) => {
     next(error);
   }
 });
+
+// Allow everyone to access the root; index.html will handle conditional rendering
+app.get('/', (req, res, next) => {
+  next();
+});
+
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, totalDays: days.length, database: pool ? 'postgres' : 'file' });
@@ -348,6 +353,60 @@ app.post('/api/auth/google', async (req, res, next) => {
     };
 
     await saveUser(user);
+    setSessionCookie(res, user);
+    res.json({ user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/auth/register', async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Missing email or password.' });
+    
+    // Very simple "hash" for demonstration (In production use bcrypt)
+    const passwordHash = `hash:${password}`; 
+    const user = {
+      sub: `local:${email}`,
+      email,
+      name: email.split('@')[0],
+      passwordHash
+    };
+
+    const db = await readDb();
+    if (db.users[user.sub]) return res.status(400).json({ error: 'User already exists.' });
+    
+    await saveUser(user);
+    setSessionCookie(res, user);
+    res.json({ user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/auth/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const sub = `local:${email}`;
+    let user;
+
+    if (pool) {
+      const result = await pool.query('select * from users where google_sub = $1', [sub]);
+      user = result.rows[0];
+      if (user) {
+        // Map postgres snake_case to camelCase
+        user = { ...user, sub: user.google_sub, passwordHash: user.password_hash };
+      }
+    } else {
+      const db = await readDb();
+      user = db.users[sub];
+    }
+    
+    if (!user || user.passwordHash !== `hash:${password}`) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
     setSessionCookie(res, user);
     res.json({ user: publicUser(user) });
   } catch (error) {

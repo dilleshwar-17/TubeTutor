@@ -6,6 +6,7 @@
 <title>45 Day DSA Calendar</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
   :root {
     --glass-bg: rgba(255,255,255,0.07);
@@ -32,29 +33,13 @@
     overflow-x: hidden;
   }
 
-  /* === ANIMATED BACKGROUND === */
-  .bg-canvas {
-    position: fixed; inset: 0; z-index: 0; overflow: hidden;
-  }
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(90px);
-    opacity: 0.25;
-    animation: drift linear infinite;
-  }
-  .orb1 { width: 600px; height: 600px; background: #7c3aed; top: -200px; left: -150px; animation-duration: 22s; }
-  .orb2 { width: 500px; height: 500px; background: #0ea5e9; bottom: -180px; right: -100px; animation-duration: 28s; animation-direction: reverse; }
-  .orb3 { width: 400px; height: 400px; background: #059669; top: 40%; left: 30%; animation-duration: 18s; animation-delay: -8s; }
-  .orb4 { width: 350px; height: 350px; background: #ea580c; top: 10%; right: 20%; animation-duration: 25s; animation-delay: -12s; }
-  .orb5 { width: 300px; height: 300px; background: #db2777; bottom: 20%; left: 15%; animation-duration: 20s; animation-delay: -5s; }
-
-  @keyframes drift {
-    0%   { transform: translate(0,0) scale(1); }
-    25%  { transform: translate(60px, -40px) scale(1.05); }
-    50%  { transform: translate(-30px, 70px) scale(0.95); }
-    75%  { transform: translate(-70px, -20px) scale(1.08); }
-    100% { transform: translate(0,0) scale(1); }
+  /* Three.js Background styles */
+  canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
   }
 
   /* Noise grain overlay */
@@ -108,63 +93,74 @@
     font-size: 14px;
     letter-spacing: 1px;
   }
-  .auth-panel {
+  .auth-note.visible { display: block; }
+
+  /* === NAVIGATION === */
+  nav {
+    position: sticky;
+    top: 20px;
+    z-index: 1000;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: center;
+  }
+  .nav-glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 22px;
+    gap: 8px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
-  .user-chip {
-    display: none;
+  .nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .nav-link:hover, .nav-link.active {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .nav-link.active {
+    color: var(--accent1);
+    background: rgba(167, 139, 250, 0.1);
+  }
+  .nav-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 4px;
+  }
+  .nav-user {
+    display: flex;
     align-items: center;
     gap: 10px;
-    max-width: min(100%, 380px);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(12px);
+    padding: 4px 4px 4px 12px;
     border-radius: 100px;
-    padding: 6px 8px 6px 6px;
+    background: rgba(255, 255, 255, 0.05);
   }
-  .user-chip.visible { display: flex; }
-  .user-chip img {
-    width: 30px;
-    height: 30px;
+  .nav-user img {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    object-fit: cover;
+    border: 1px solid var(--accent1);
   }
-  .user-chip span {
-    min-width: 0;
+  .nav-user span {
+    font-size: 12px;
+    max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 12px;
-    color: var(--text);
   }
-  .auth-btn {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.14);
-    color: var(--text);
-    border-radius: 100px;
-    padding: 8px 14px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-  .auth-btn:hover {
-    border-color: rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.13);
-  }
-  .auth-note {
-    display: none;
-    width: 100%;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-  .auth-note.visible { display: block; }
 
   /* === STATS DASHBOARD === */
   .stats-grid {
@@ -502,6 +498,14 @@
   /* === HIDDEN === */
   .phase-section.hidden { display: none; }
 
+  /* Generic Glass Card */
+  .glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+  }
+
   /* scrollbar */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -510,66 +514,93 @@
 </head>
 <body>
 
-<div class="bg-canvas">
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
-  <div class="orb orb4"></div>
-  <div class="orb orb5"></div>
-</div>
 <div class="grain"></div>
+<script src="/js/three-bg.js"></script>
 
 <div class="container">
+
+  <nav>
+    <div class="nav-glass">
+      <a href="/" class="nav-link active">Home</a>
+      <a href="/about.html" class="nav-link">About</a>
+      <div class="nav-divider"></div>
+      <div id="nav-auth-section">
+        <a href="/login.html" class="nav-link" id="nav-login-link">Login</a>
+        <div class="nav-user" id="nav-user-profile" style="display: none;">
+          <span id="nav-user-name">User</span>
+          <img id="nav-user-avatar" src="" alt="Avatar" onclick="logout()" style="cursor: pointer;" title="Click to Logout">
+        </div>
+      </div>
+    </div>
+  </nav>
 
   <header>
     <div class="header-badge">✦ Interactive Tracker</div>
     <h1>45 Day DSA Calendar</h1>
     <p class="subtitle">Track your Data Structures & Algorithms journey</p>
-    <div class="auth-panel">
-      <div id="google-signin"></div>
-      <button class="auth-btn" type="button" onclick="window.location.href='/login.html'">Login / Register</button>
-      <div class="user-chip" id="user-chip">
-        <img id="user-avatar" alt="">
-        <span id="user-name"></span>
-        <button class="auth-btn" type="button" onclick="logout()">Sign out</button>
-      </div>
-      <p class="auth-note" id="auth-note"></p>
-    </div>
   </header>
 
-  <!-- STATS -->
-  <div class="stats-grid">
-    <div class="stat-card s1"><div class="stat-number" id="stat-done">0</div><div class="stat-label">Completed</div></div>
-    <div class="stat-card s2"><div class="stat-number" id="stat-left">45</div><div class="stat-label">Remaining</div></div>
-    <div class="stat-card s3"><div class="stat-number" id="stat-streak">0</div><div class="stat-label">Day Streak</div></div>
-    <div class="stat-card s4"><div class="stat-number" id="stat-pct">0%</div><div class="stat-label">Progress</div></div>
-  </div>
-
-  <!-- PROGRESS BAR -->
-  <div class="progress-wrapper">
-    <div class="progress-header">
-      <span class="progress-label">Overall Progress</span>
-      <span class="progress-pct" id="progress-pct-label">0%</span>
+  <!-- DASHBOARD VIEW (Hidden by default) -->
+  <div id="dashboard-view" style="display: none;">
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card s1"><div class="stat-number" id="stat-done">0</div><div class="stat-label">Completed</div></div>
+      <div class="stat-card s2"><div class="stat-number" id="stat-left">45</div><div class="stat-label">Remaining</div></div>
+      <div class="stat-card s3"><div class="stat-number" id="stat-streak">0</div><div class="stat-label">Day Streak</div></div>
+      <div class="stat-card s4"><div class="stat-number" id="stat-pct">0%</div><div class="stat-label">Progress</div></div>
     </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-wrapper">
+      <div class="progress-header">
+        <span class="progress-label">Overall Progress</span>
+        <span class="progress-pct" id="progress-pct-label">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters">
+      <button class="filter-btn active f1" data-filter="1" onclick="filterPhase('1', this)">Phase 1 — Foundation</button>
+      <button class="filter-btn f2" data-filter="2" onclick="filterPhase('2', this)">Phase 2 — Core DS</button>
+      <button class="filter-btn f3" data-filter="3" onclick="filterPhase('3', this)">Phase 3 — Algorithms</button>
+      <button class="filter-btn f4" data-filter="4" onclick="filterPhase('4', this)">Phase 4 — Advanced</button>
+      <button class="filter-btn f5" data-filter="5" onclick="filterPhase('5', this)">Phase 5 — Revision</button>
+    </div>
+
+    <!-- CONTENT (generated by JS) -->
+    <div id="content"></div>
+
+    <button class="reset-btn" onclick="resetAll()">↺ Reset All Progress</button>
+  </div>
+
+  <!-- ABOUT/LANDING VIEW (Shown when not logged in) -->
+  <div id="landing-view">
+    <div class="glass-card" style="padding: 40px; margin-top: 20px; line-height: 1.8; animation: fadeUp 0.8s ease both;">
+      <h2 style="font-family: 'Syne', sans-serif; color: var(--accent1); margin-bottom: 20px; font-size: 28px;">Master DSA in 45 Days</h2>
+      <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 16px;">
+        Welcome to the 45 Day DSA Tracker. This platform is designed to guide you through a structured curriculum of Data Structures and Algorithms, ensuring you build a world-class foundation for your technical interviews and engineering career.
+      </p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 40px;">
+        <div class="stat-card" style="text-align: left; padding: 24px;">
+          <h3 style="color: var(--accent2); font-size: 14px; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px;">Structured Path</h3>
+          <p style="font-size: 13px; margin: 0;">5 carefully curated phases covering everything from basic Arrays to Advanced Dynamic Programming.</p>
+        </div>
+        <div class="stat-card" style="text-align: left; padding: 24px;">
+          <h3 style="color: var(--accent3); font-size: 14px; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px;">Interactive Tracking</h3>
+          <p style="font-size: 13px; margin: 0;">Mark problems as complete, track your streak, and see your progress come alive with real-time stats.</p>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <p style="margin-bottom: 24px; font-weight: 600;">Sign in with Google to unlock your personalized tracker and start your journey.</p>
+        <button class="filter-btn active" style="padding: 14px 40px; font-size: 14px;" onclick="window.location.href='/login.html'">Get Started — Login with Google</button>
+      </div>
     </div>
   </div>
-
-  <!-- FILTERS -->
-  <div class="filters">
-    <button class="filter-btn active" data-filter="all" onclick="filterPhase('all', this)">All Phases</button>
-    <button class="filter-btn f1" data-filter="1" onclick="filterPhase('1', this)">Phase 1 — Foundation</button>
-    <button class="filter-btn f2" data-filter="2" onclick="filterPhase('2', this)">Phase 2 — Core DS</button>
-    <button class="filter-btn f3" data-filter="3" onclick="filterPhase('3', this)">Phase 3 — Algorithms</button>
-    <button class="filter-btn f4" data-filter="4" onclick="filterPhase('4', this)">Phase 4 — Advanced</button>
-    <button class="filter-btn f5" data-filter="5" onclick="filterPhase('5', this)">Phase 5 — Revision</button>
-  </div>
-
-  <!-- CONTENT (generated by JS) -->
-  <div id="content"></div>
-
-  <button class="reset-btn" onclick="resetAll()">↺ Reset All Progress</button>
 </div>
 
 <script>
@@ -719,63 +750,34 @@ async function loadAuth() {
 }
 
 function renderAuth() {
-  const signIn = document.getElementById('google-signin');
-  const chip = document.getElementById('user-chip');
-  const note = document.getElementById('auth-note');
-  const avatar = document.getElementById('user-avatar');
-  const name = document.getElementById('user-name');
+  const loginLink = document.getElementById('nav-login-link');
+  const userProfile = document.getElementById('nav-user-profile');
+  const userName = document.getElementById('nav-user-name');
+  const userAvatar = document.getElementById('nav-user-avatar');
+  const dashboardView = document.getElementById('dashboard-view');
+  const landingView = document.getElementById('landing-view');
 
   if (currentUser) {
-    signIn.style.display = 'none';
-    chip.classList.add('visible');
-    avatar.src = currentUser.picture || '';
-    name.textContent = currentUser.name || currentUser.email;
-    note.classList.remove('visible');
-    note.textContent = '';
+    if (loginLink) loginLink.style.display = 'none';
+    if (userProfile) {
+      userProfile.style.display = 'flex';
+      userName.textContent = currentUser.name || currentUser.email.split('@')[0];
+      userAvatar.src = currentUser.picture || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+    }
+    if (dashboardView) dashboardView.style.display = 'block';
+    if (landingView) landingView.style.display = 'none';
     return;
   }
 
-  chip.classList.remove('visible');
-  signIn.style.display = '';
-  if (!googleClientId) {
-    note.textContent = 'Set GOOGLE_CLIENT_ID to enable Google sign-in.';
-    note.classList.add('visible');
-  }
+  if (loginLink) loginLink.style.display = 'block';
+  if (userProfile) userProfile.style.display = 'none';
+  if (dashboardView) dashboardView.style.display = 'none';
+  if (landingView) landingView.style.display = 'block';
 }
 
 function initGoogleSignIn() {
   renderAuth();
-  if (!googleClientId) return;
-  if (!window.google || !window.google.accounts) {
-    setTimeout(initGoogleSignIn, 250);
-    return;
-  }
-  google.accounts.id.initialize({
-    client_id: googleClientId,
-    callback: handleGoogleCredential
-  });
-  google.accounts.id.renderButton(document.getElementById('google-signin'), {
-    theme: 'filled_black',
-    size: 'large',
-    shape: 'pill',
-    text: 'signin_with'
-  });
-}
-
-async function handleGoogleCredential(response) {
-  try {
-    const result = await api('/api/auth/google', {
-      method: 'POST',
-      body: JSON.stringify({ credential: response.credential })
-    });
-    currentUser = result.user;
-    renderAuth();
-    await loadCompleted();
-    render();
-  } catch (error) {
-    console.error('Google sign-in failed', error);
-    alert('Google sign-in failed. Check GOOGLE_CLIENT_ID and authorized origins.');
-  }
+  // Google Sign In is handled in login.html now, but we keep the listener for state sync if needed.
 }
 
 async function logout() {
@@ -1017,7 +1019,9 @@ function spawnConfetti(card) {
   await loadDays();
   await loadCompleted();
   render();
-  initGoogleSignIn();
+  renderAuth();
+  // Default to Phase 1 view
+  filterPhase('1', document.querySelector('.filter-btn.f1'));
 })();
 </script>
 </body>
