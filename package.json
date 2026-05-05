@@ -1,0 +1,17 @@
+{
+  "name": "dsa-tracker",
+  "version": "1.0.0",
+  "description": "45 day DSA tracker with an Express backend and file-backed database.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "google-auth-library": "^10.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0"
+  }
+}

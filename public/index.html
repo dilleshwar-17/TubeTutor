@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>45 Day DSA Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --glass-bg: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.15);
+    --glass-shadow: rgba(0,0,0,0.4);
+    --accent1: #a78bfa;
+    --accent2: #38bdf8;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --accent5: #f472b6;
+    --text: #f1f5f9;
+    --text-muted: rgba(241,245,249,0.5);
+    --done-bg: rgba(52,211,153,0.13);
+    --done-border: rgba(52,211,153,0.45);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: #0a0a1a;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* === ANIMATED BACKGROUND === */
+  .bg-canvas {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.25;
+    animation: drift linear infinite;
+  }
+  .orb1 { width: 600px; height: 600px; background: #7c3aed; top: -200px; left: -150px; animation-duration: 22s; }
+  .orb2 { width: 500px; height: 500px; background: #0ea5e9; bottom: -180px; right: -100px; animation-duration: 28s; animation-direction: reverse; }
+  .orb3 { width: 400px; height: 400px; background: #059669; top: 40%; left: 30%; animation-duration: 18s; animation-delay: -8s; }
+  .orb4 { width: 350px; height: 350px; background: #ea580c; top: 10%; right: 20%; animation-duration: 25s; animation-delay: -12s; }
+  .orb5 { width: 300px; height: 300px; background: #db2777; bottom: 20%; left: 15%; animation-duration: 20s; animation-delay: -5s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0,0) scale(1); }
+    25%  { transform: translate(60px, -40px) scale(1.05); }
+    50%  { transform: translate(-30px, 70px) scale(0.95); }
+    75%  { transform: translate(-70px, -20px) scale(1.08); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+
+  /* Noise grain overlay */
+  .grain {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    opacity: 0.4;
+  }
+
+  /* === LAYOUT === */
+  .container {
+    position: relative; z-index: 2;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* === HEADER === */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeUp 0.7s ease both;
+  }
+  .header-badge {
+    display: inline-block;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    border-radius: 100px;
+    padding: 6px 18px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #f1f5f9 0%, var(--accent1) 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+  .auth-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+  .user-chip {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    max-width: min(100%, 380px);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    border-radius: 100px;
+    padding: 6px 8px 6px 6px;
+  }
+  .user-chip.visible { display: flex; }
+  .user-chip img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .user-chip span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .auth-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: var(--text);
+    border-radius: 100px;
+    padding: 8px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .auth-btn:hover {
+    border-color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.13);
+  }
+  .auth-note {
+    display: none;
+    width: 100%;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .auth-note.visible { display: block; }
+
+  /* === STATS DASHBOARD === */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.7s ease 0.1s both;
+  }
+  .stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 20px 24px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 40px var(--glass-shadow); }
+  .stat-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .s1 .stat-number { color: var(--accent3); }
+  .s2 .stat-number { color: var(--accent1); }
+  .s3 .stat-number { color: var(--accent2); }
+  .s4 .stat-number { color: var(--accent4); }
+
+  /* === PROGRESS BAR === */
+  .progress-wrapper {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 24px 28px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.7s ease 0.15s both;
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .progress-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .progress-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent3);
+  }
+  .progress-track {
+    height: 10px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3));
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 12px rgba(52,211,153,0.5);
+  }
+
+  /* === PHASE FILTERS === */
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+  .filter-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    color: var(--text);
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .filter-btn:hover { background: rgba(255,255,255,0.13); transform: translateY(-1px); }
+  .filter-btn.active { background: var(--accent1); border-color: var(--accent1); color: #fff; box-shadow: 0 0 20px rgba(167,139,250,0.5); }
+  .filter-btn.f2.active { background: var(--accent2); border-color: var(--accent2); box-shadow: 0 0 20px rgba(56,189,248,0.5); }
+  .filter-btn.f3.active { background: var(--accent3); border-color: var(--accent3); box-shadow: 0 0 20px rgba(52,211,153,0.5); }
+  .filter-btn.f4.active { background: var(--accent4); border-color: var(--accent4); box-shadow: 0 0 20px rgba(251,146,60,0.5); }
+  .filter-btn.f5.active { background: var(--accent5); border-color: var(--accent5); box-shadow: 0 0 20px rgba(244,114,182,0.5); }
+
+  /* === PHASE SECTION === */
+  .phase-section {
+    margin-bottom: 48px;
+    animation: fadeUp 0.7s ease both;
+  }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 16px 22px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    border-radius: 14px;
+  }
+  .phase-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .phase-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .phase-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+  .phase-mini-bar {
+    width: 80px; height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .phase-mini-fill { height: 100%; border-radius: 100px; transition: width 0.5s ease; }
+
+  /* === DAY CARDS === */
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .day-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+  .day-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent1)), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .day-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.25); }
+  .day-card:hover::before { opacity: 1; }
+  .day-card.completed {
+    background: var(--done-bg);
+    border-color: var(--done-border);
+  }
+  .day-card.completed::before { opacity: 1; background: linear-gradient(90deg, transparent, var(--accent3), transparent); }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .day-badge {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .check-btn {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .day-card.completed .check-btn {
+    background: var(--accent3);
+    border-color: var(--accent3);
+    box-shadow: 0 0 12px rgba(52,211,153,0.6);
+  }
+  .check-icon { font-size: 13px; opacity: 0; transition: opacity 0.2s; }
+  .day-card.completed .check-icon { opacity: 1; }
+
+  .topic-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .day-card.completed .topic-name { color: var(--accent3); }
+
+  .subtopics {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    letter-spacing: 0.3px;
+  }
+  .problem-links {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .problem-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 11px;
+    line-height: 1.35;
+    padding: 7px 9px;
+    border-radius: 9px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.07);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .problem-link:hover {
+    color: var(--card-accent, var(--accent2));
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(255,255,255,0.16);
+  }
+  .problem-link.disabled {
+    pointer-events: none;
+    color: var(--text-muted);
+  }
+  .problem-link span:first-child {
+    flex: 1;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .diff-badge {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    border: 1px solid;
+  }
+  .diff-easy { color: var(--accent3); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
+  .diff-medium { color: var(--accent4); border-color: rgba(251,146,60,0.3); background: rgba(251,146,60,0.07); }
+  .diff-hard { color: var(--accent5); border-color: rgba(244,114,182,0.3); background: rgba(244,114,182,0.07); }
+
+  .done-stamp {
+    margin-left: auto;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--accent3);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .day-card.completed .done-stamp { opacity: 1; }
+
+  /* === CONFETTI === */
+  .confetti-piece {
+    position: fixed;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confettiFall 1.2s ease-out forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translateY(250px) rotate(720deg) scale(0); opacity: 0; }
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === RESET BTN === */
+  .reset-btn {
+    display: block;
+    margin: 40px auto 0;
+    background: var(--glass-bg);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    color: var(--text-muted);
+    padding: 10px 28px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover { color: var(--text); border-color: rgba(244,114,182,0.4); background: rgba(244,114,182,0.08); }
+
+  /* === HIDDEN === */
+  .phase-section.hidden { display: none; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="orb orb4"></div>
+  <div class="orb orb5"></div>
+</div>
+<div class="grain"></div>
+
+<div class="container">
+
+  <header>
+    <div class="header-badge">✦ Interactive Tracker</div>
+    <h1>45 Day DSA Calendar</h1>
+    <p class="subtitle">Track your Data Structures & Algorithms journey</p>
+    <div class="auth-panel">
+      <div id="google-signin"></div>
+      <div class="user-chip" id="user-chip">
+        <img id="user-avatar" alt="">
+        <span id="user-name"></span>
+        <button class="auth-btn" type="button" onclick="logout()">Sign out</button>
+      </div>
+      <p class="auth-note" id="auth-note"></p>
+    </div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card s1"><div class="stat-number" id="stat-done">0</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card s2"><div class="stat-number" id="stat-left">45</div><div class="stat-label">Remaining</div></div>
+    <div class="stat-card s3"><div class="stat-number" id="stat-streak">0</div><div class="stat-label">Day Streak</div></div>
+    <div class="stat-card s4"><div class="stat-number" id="stat-pct">0%</div><div class="stat-label">Progress</div></div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-wrapper">
+    <div class="progress-header">
+      <span class="progress-label">Overall Progress</span>
+      <span class="progress-pct" id="progress-pct-label">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all" onclick="filterPhase('all', this)">All Phases</button>
+    <button class="filter-btn f1" data-filter="1" onclick="filterPhase('1', this)">Phase 1 — Foundation</button>
+    <button class="filter-btn f2" data-filter="2" onclick="filterPhase('2', this)">Phase 2 — Core DS</button>
+    <button class="filter-btn f3" data-filter="3" onclick="filterPhase('3', this)">Phase 3 — Algorithms</button>
+    <button class="filter-btn f4" data-filter="4" onclick="filterPhase('4', this)">Phase 4 — Advanced</button>
+    <button class="filter-btn f5" data-filter="5" onclick="filterPhase('5', this)">Phase 5 — Revision</button>
+  </div>
+
+  <!-- CONTENT (generated by JS) -->
+  <div id="content"></div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ Reset All Progress</button>
+</div>
+
+<script>
+// ================================================================
+// DATA
+// ================================================================
+const phases = [
+  {
+    id: 1,
+    name: "Phase 1 — Foundation",
+    color: "#a78bfa",
+    accent: "--accent1",
+    days: [
+      { day: 1,  topic: "Arrays Basics",            subs: "Traversal, Insertion, Deletion, Rotation",      diff: "easy" },
+      { day: 2,  topic: "Array Algorithms",          subs: "Kadane's, Sliding Window, Two Pointer",         diff: "medium" },
+      { day: 3,  topic: "Strings Basics",            subs: "Reverse, Anagram Check, Character Count",       diff: "easy" },
+      { day: 4,  topic: "String Patterns",           subs: "Palindrome, Longest Substring, Compression",   diff: "medium" },
+      { day: 5,  topic: "Searching Algorithms",      subs: "Linear Search, Binary Search, Ternary Search",  diff: "easy" },
+      { day: 6,  topic: "Sorting — Basics",          subs: "Bubble, Selection, Insertion Sort",             diff: "easy" },
+      { day: 7,  topic: "Sorting — Advanced",        subs: "Merge Sort, Quick Sort, Heap Sort",             diff: "medium" },
+      { day: 8,  topic: "Hashing",                   subs: "HashMap, HashSet, Frequency Map",               diff: "medium" },
+      { day: 9,  topic: "Two Pointers & Prefix Sum", subs: "Pair Sum, Subarray Sum, Running Prefix",        diff: "medium" },
+      { day: 10, topic: "Recursion Basics",          subs: "Factorial, Fibonacci, Power, Subsets",          diff: "medium" },
+    ]
+  },
+  {
+    id: 2,
+    name: "Phase 2 — Core Data Structures",
+    color: "#38bdf8",
+    accent: "--accent2",
+    days: [
+      { day: 11, topic: "Singly Linked List",        subs: "Insert, Delete, Search, Traversal",             diff: "easy" },
+      { day: 12, topic: "Doubly & Circular List",    subs: "DLL Operations, CLL, Flatten List",             diff: "medium" },
+      { day: 13, topic: "Linked List Problems",      subs: "Reversal, Cycle Detection (Floyd's), Merge",    diff: "medium" },
+      { day: 14, topic: "Stack",                     subs: "Implementation, Parenthesis, Min Stack",        diff: "easy" },
+      { day: 15, topic: "Queue",                     subs: "Implementation, Circular Queue, Deque",         diff: "easy" },
+      { day: 16, topic: "Stack + Queue Problems",    subs: "Next Greater, Sliding Window Max, LRU Cache",   diff: "hard" },
+      { day: 17, topic: "Binary Trees",              subs: "Inorder, Preorder, Postorder, Height",          diff: "medium" },
+      { day: 18, topic: "Tree — Level Order",        subs: "BFS, Zigzag, Right View, Width",                diff: "medium" },
+      { day: 19, topic: "Binary Search Tree",        subs: "Insert, Delete, Search, Validate BST",         diff: "medium" },
+      { day: 20, topic: "BST Problems",              subs: "LCA, Kth Smallest, Convert Sorted Array",       diff: "hard" },
+      { day: 21, topic: "Heaps",                     subs: "Min Heap, Max Heap, Heapify",                   diff: "medium" },
+      { day: 22, topic: "Priority Queue Problems",   subs: "K Largest, Merge K Lists, Median Stream",       diff: "hard" },
+      { day: 23, topic: "Tries",                     subs: "Insert, Search, Starts With, Auto-complete",   diff: "medium" },
+      { day: 24, topic: "Segment Trees",             subs: "Build, Range Query, Point Update",              diff: "hard" },
+      { day: 25, topic: "Disjoint Set Union",        subs: "Union by Rank, Path Compression, MST",         diff: "hard" },
+    ]
+  },
+  {
+    id: 3,
+    name: "Phase 3 — Graph & DP Algorithms",
+    color: "#34d399",
+    accent: "--accent3",
+    days: [
+      { day: 26, topic: "Graphs — Basics & BFS",     subs: "Adjacency List/Matrix, BFS Traversal",          diff: "medium" },
+      { day: 27, topic: "Graphs — DFS",              subs: "DFS Traversal, Connected Components, Islands",  diff: "medium" },
+      { day: 28, topic: "Topological Sort",          subs: "Kahn's Algorithm, DFS-based, Course Schedule",  diff: "hard" },
+      { day: 29, topic: "Dijkstra's Algorithm",      subs: "Shortest Path, Modified Dijkstra, Variants",    diff: "hard" },
+      { day: 30, topic: "Bellman Ford & Floyd",      subs: "Negative Weights, All-Pairs Shortest Path",     diff: "hard" },
+      { day: 31, topic: "Minimum Spanning Tree",     subs: "Prim's Algorithm, Kruskal's Algorithm",         diff: "hard" },
+      { day: 32, topic: "DP — Introduction",         subs: "Memoization, Tabulation, Fibonacci, Climbing",  diff: "medium" },
+      { day: 33, topic: "DP — 0/1 Knapsack",         subs: "0/1 Knapsack, Subset Sum, Equal Partition",     diff: "hard" },
+      { day: 34, topic: "DP — Sequences",            subs: "LCS, Edit Distance, Print LCS",                 diff: "hard" },
+      { day: 35, topic: "DP — LIS",                  subs: "Longest Increasing Subsequence, LISN",          diff: "hard" },
+      { day: 36, topic: "DP — Matrix & Strings",     subs: "Matrix Chain Multiplication, Palindrome DP",    diff: "hard" },
+      { day: 37, topic: "DP on Trees",               subs: "Tree Diameter, Max Path Sum, DP on Subtrees",   diff: "hard" },
+      { day: 38, topic: "Bitmask DP",                subs: "Travelling Salesman, Assignment Problem",        diff: "hard" },
+    ]
+  },
+  {
+    id: 4,
+    name: "Phase 4 — Advanced Topics",
+    color: "#fb923c",
+    accent: "--accent4",
+    days: [
+      { day: 39, topic: "Greedy Algorithms",         subs: "Activity Selection, Fractional Knapsack, Huffman", diff: "medium" },
+      { day: 40, topic: "Backtracking",              subs: "N-Queens, Sudoku Solver, Rat in Maze",           diff: "hard" },
+      { day: 41, topic: "Divide and Conquer",        subs: "Merge Sort, Count Inversions, Closest Pair",     diff: "medium" },
+      { day: 42, topic: "Bit Manipulation",          subs: "XOR Tricks, Count Bits, Power of Two",           diff: "medium" },
+      { day: 43, topic: "Advanced Strings",          subs: "KMP Algorithm, Z-Algorithm, Rabin Karp",         diff: "hard" },
+      { day: 44, topic: "Math & Number Theory",      subs: "GCD, Sieve of Eratosthenes, Modular Arithmetic", diff: "medium" },
+    ]
+  },
+  {
+    id: 5,
+    name: "Phase 5 — Mock & Revision",
+    color: "#f472b6",
+    accent: "--accent5",
+    days: [
+      { day: 45, topic: "Mock Interview + Revision", subs: "Full Revision, Timed Practice, Weak Spots",      diff: "hard" },
+    ]
+  }
+];
+
+// ================================================================
+// API STORAGE
+// ================================================================
+const CLIENT_KEY = 'dsa-tracker-client-id';
+let completed = new Set();
+let backendDays = new Map();
+let currentUser = null;
+let googleClientId = '';
+
+function getClientId() {
+  let id = localStorage.getItem(CLIENT_KEY);
+  if (!id) {
+    id = window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    localStorage.setItem(CLIENT_KEY, id);
+  }
+  return id;
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-client-id': getClientId(),
+      ...(options.headers || {})
+    }
+  });
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  return response.json();
+}
+
+async function loadConfig() {
+  const result = await api('/api/config');
+  googleClientId = result.googleClientId || '';
+}
+
+async function loadAuth() {
+  const result = await api('/api/auth/me');
+  currentUser = result.user;
+  renderAuth();
+}
+
+function renderAuth() {
+  const signIn = document.getElementById('google-signin');
+  const chip = document.getElementById('user-chip');
+  const note = document.getElementById('auth-note');
+  const avatar = document.getElementById('user-avatar');
+  const name = document.getElementById('user-name');
+
+  if (currentUser) {
+    signIn.style.display = 'none';
+    chip.classList.add('visible');
+    avatar.src = currentUser.picture || '';
+    name.textContent = currentUser.name || currentUser.email;
+    note.classList.remove('visible');
+    note.textContent = '';
+    return;
+  }
+
+  chip.classList.remove('visible');
+  signIn.style.display = '';
+  if (!googleClientId) {
+    note.textContent = 'Set GOOGLE_CLIENT_ID to enable Google sign-in.';
+    note.classList.add('visible');
+  }
+}
+
+function initGoogleSignIn() {
+  renderAuth();
+  if (!googleClientId) return;
+  if (!window.google || !window.google.accounts) {
+    setTimeout(initGoogleSignIn, 250);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: googleClientId,
+    callback: handleGoogleCredential
+  });
+  google.accounts.id.renderButton(document.getElementById('google-signin'), {
+    theme: 'filled_black',
+    size: 'large',
+    shape: 'pill',
+    text: 'signin_with'
+  });
+}
+
+async function handleGoogleCredential(response) {
+  try {
+    const result = await api('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential: response.credential })
+    });
+    currentUser = result.user;
+    renderAuth();
+    await loadCompleted();
+    render();
+  } catch (error) {
+    console.error('Google sign-in failed', error);
+    alert('Google sign-in failed. Check GOOGLE_CLIENT_ID and authorized origins.');
+  }
+}
+
+async function logout() {
+  await api('/api/auth/logout', { method: 'POST' });
+  if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
+  currentUser = null;
+  renderAuth();
+  await loadCompleted();
+  render();
+}
+
+async function loadDays() {
+  const result = await api('/api/days');
+  backendDays = new Map(result.days.map(day => [day.day, day]));
+  phases.forEach(phase => {
+    phase.days = phase.days.map(day => ({ ...day, ...(backendDays.get(day.day) || {}) }));
+  });
+}
+
+async function loadCompleted() {
+  try {
+    const result = await api('/api/progress');
+    completed = new Set(result.completedDays);
+  } catch(e) {
+    console.error('Progress load failed', e);
+    completed = new Set();
+  }
+}
+
+async function saveDay(day, done) {
+  return api(`/api/progress/${day}`, {
+    method: 'PUT',
+    body: JSON.stringify({ done })
+  });
+}
+
+// ================================================================
+// RENDER
+// ================================================================
+function render() {
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  let animDelay = 0.25;
+  phases.forEach(phase => {
+    const doneInPhase = phase.days.filter(d => completed.has(d.day)).length;
+    const pct = Math.round((doneInPhase / phase.days.length) * 100);
+
+    const section = document.createElement('div');
+    section.className = 'phase-section';
+    section.dataset.phase = phase.id;
+    section.style.animationDelay = animDelay + 's';
+    animDelay += 0.07;
+
+    section.innerHTML = `
+      <div class="phase-header">
+        <div class="phase-dot" style="background:${phase.color}; box-shadow:0 0 10px ${phase.color}88"></div>
+        <span class="phase-title" style="color:${phase.color}">${phase.name}</span>
+        <span class="phase-count">${doneInPhase}/${phase.days.length}</span>
+        <div class="phase-mini-bar">
+          <div class="phase-mini-fill" style="width:${pct}%; background:${phase.color}"></div>
+        </div>
+      </div>
+      <div class="days-grid">
+        ${phase.days.map(d => cardHTML(d, phase.color)).join('')}
+      </div>
+    `;
+    content.appendChild(section);
+  });
+
+  updateStats();
+}
+
+function cardHTML(d, color) {
+  const done = completed.has(d.day);
+  const problems = Array.isArray(d.problems) ? d.problems : [];
+  const problemLinks = problems.length
+    ? `<div class="problem-links">${problems.map(problemLinkHTML).join('')}</div>`
+    : '';
+  return `
+    <div class="day-card ${done ? 'completed' : ''}"
+         style="--card-accent: ${color}"
+         onclick="toggleDay(${d.day}, this)">
+      <div class="card-top">
+        <span class="day-badge">Day ${String(d.day).padStart(2,'0')}</span>
+        <div class="check-btn"><span class="check-icon">✓</span></div>
+      </div>
+      <div class="topic-name">${d.topic}</div>
+      <div class="subtopics">${d.subs}</div>
+      ${problemLinks}
+      <div class="card-footer">
+        <span class="diff-badge diff-${d.diff}">${d.diff}</span>
+        <span class="done-stamp">✦ DONE</span>
+      </div>
+    </div>
+  `;
+}
+
+function problemLinkHTML(problem) {
+  const title = escapeHTML(problem.title || 'Practice');
+  if (!problem.url) {
+    return `<span class="problem-link disabled"><span>${title}</span></span>`;
+  }
+  return `<a class="problem-link" href="${escapeHTML(problem.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"><span>${title}</span><span>↗</span></a>`;
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+// ================================================================
+// INTERACTION
+// ================================================================
+async function toggleDay(dayNum, card) {
+  const wasDone = completed.has(dayNum);
+  if (completed.has(dayNum)) {
+    completed.delete(dayNum);
+    card.classList.remove('completed');
+  } else {
+    completed.add(dayNum);
+    card.classList.add('completed');
+    spawnConfetti(card);
+  }
+  updateStats();
+  updatePhaseCounts();
+
+  try {
+    await saveDay(dayNum, !wasDone);
+  } catch (error) {
+    console.error('Progress save failed', error);
+    if (wasDone) {
+      completed.add(dayNum);
+      card.classList.add('completed');
+    } else {
+      completed.delete(dayNum);
+      card.classList.remove('completed');
+    }
+    updateStats();
+    updatePhaseCounts();
+    alert('Could not save progress. Make sure the backend server is running.');
+  }
+}
+
+function updateStats() {
+  const done = completed.size;
+  const total = 45;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-left').textContent = total - done;
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct-label').textContent = pct + '%';
+
+  // Streak: count consecutive days starting from day 1
+  let streak = 0;
+  for (let i = 1; i <= 45; i++) {
+    if (completed.has(i)) streak++;
+    else break;
+  }
+  document.getElementById('stat-streak').textContent = streak;
+}
+
+function updatePhaseCounts() {
+  phases.forEach(phase => {
+    const section = document.querySelector(`.phase-section[data-phase="${phase.id}"]`);
+    if (!section) return;
+    const doneInPhase = phase.days.filter(d => completed.has(d.day)).length;
+    const pct = Math.round((doneInPhase / phase.days.length) * 100);
+    section.querySelector('.phase-count').textContent = `${doneInPhase}/${phase.days.length}`;
+    section.querySelector('.phase-mini-fill').style.width = pct + '%';
+  });
+}
+
+function filterPhase(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.phase-section').forEach(s => {
+    if (filter === 'all' || s.dataset.phase === filter) {
+      s.classList.remove('hidden');
+    } else {
+      s.classList.add('hidden');
+    }
+  });
+}
+
+async function resetAll() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  completed.clear();
+  try {
+    await api('/api/progress', { method: 'DELETE' });
+  } catch (error) {
+    console.error('Reset failed', error);
+    alert('Could not reset progress. Make sure the backend server is running.');
+  }
+  render();
+}
+
+// ================================================================
+// CONFETTI
+// ================================================================
+function spawnConfetti(card) {
+  const rect = card.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ['#a78bfa','#38bdf8','#34d399','#fb923c','#f472b6','#fbbf24'];
+  for (let i = 0; i < 18; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left: ${cx + (Math.random()-0.5)*120}px;
+      top: ${cy + (Math.random()-0.5)*60}px;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      transform: rotate(${Math.random()*360}deg);
+      animation-delay: ${Math.random()*0.3}s;
+      animation-duration: ${0.8 + Math.random()*0.6}s;
+      border-radius: ${Math.random()>0.5 ? '50%' : '2px'};
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+}
+
+// ================================================================
+// INIT
+// ================================================================
+(async () => {
+  await loadConfig();
+  await loadAuth();
+  await loadDays();
+  await loadCompleted();
+  render();
+  initGoogleSignIn();
+})();
+</script>
+</body>
+</html>
