@@ -93,13 +93,23 @@ function ensureClientId() {
 }
 
 async function loadConfig() {
-  const result = await api('/api/config');
-  googleClientId = result.googleClientId || '';
+  try {
+    const result = await api('/api/config');
+    googleClientId = result.googleClientId || '';
+  } catch (error) {
+    console.warn('Failed to load config:', error);
+    googleClientId = '';
+  }
 }
 
 async function loadAuth() {
-  const result = await api('/api/auth/me');
-  currentUser = result.user;
+  try {
+    const result = await api('/api/auth/me');
+    currentUser = result.user;
+  } catch (error) {
+    console.warn('Failed to load auth:', error);
+    currentUser = null;
+  }
   renderAuth();
 }
 

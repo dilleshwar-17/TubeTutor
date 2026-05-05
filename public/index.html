@@ -698,13 +698,23 @@ async function api(path, options = {}) {
 }
 
 async function loadConfig() {
-  const result = await api('/api/config');
-  googleClientId = result.googleClientId || '';
+  try {
+    const result = await api('/api/config');
+    googleClientId = result.googleClientId || '';
+  } catch (error) {
+    console.warn('Failed to load config:', error);
+    googleClientId = '';
+  }
 }
 
 async function loadAuth() {
-  const result = await api('/api/auth/me');
-  currentUser = result.user;
+  try {
+    const result = await api('/api/auth/me');
+    currentUser = result.user;
+  } catch (error) {
+    console.warn('Failed to load auth:', error);
+    currentUser = null;
+  }
   renderAuth();
 }
 
@@ -778,11 +788,15 @@ async function logout() {
 }
 
 async function loadDays() {
-  const result = await api('/api/days');
-  backendDays = new Map(result.days.map(day => [day.day, day]));
-  phases.forEach(phase => {
-    phase.days = phase.days.map(day => ({ ...day, ...(backendDays.get(day.day) || {}) }));
-  });
+  try {
+    const result = await api('/api/days');
+    backendDays = new Map(result.days.map(day => [day.day, day]));
+    phases.forEach(phase => {
+      phase.days = phase.days.map(day => ({ ...day, ...(backendDays.get(day.day) || {}) }));
+    });
+  } catch (error) {
+    console.warn('Failed to load days:', error);
+  }
 }
 
 async function loadCompleted() {
